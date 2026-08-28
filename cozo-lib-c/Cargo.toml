@@ -38,7 +38,7 @@ io-uring = ["cozo/io-uring"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cozo = { version = "0.7.6", path = "../cozo-core", default_features = false }
+cozo = { version = "0.7.6-frog.1", path = "../cozo-core", default_features = false }
 lazy_static = "1.4.0"
 
 [build-dependencies]
