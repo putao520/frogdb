@@ -11,7 +11,7 @@ use std::os::unix::io::AsRawFd;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
+use super::{
     compression::{Compress, CompressBoxedClone},
     error::SwapVecError,
     swapveciter::SwapVecIter,
@@ -255,9 +255,6 @@ where
         let batch: Vec<T> = (0..self.config.batch_size)
             .map(|_| self.vector.pop_front().unwrap())
             .collect::<Vec<_>>();
-        // TODO: shrink self.vector by writing double
-        // sized batches and calling self.vector.shrink_to()
-
         let buffer = bincode::serialize(&batch)?;
         let compressed = self.config.compression.compress(buffer);
         self.tempfile.as_mut().unwrap().write_all(&compressed)?;

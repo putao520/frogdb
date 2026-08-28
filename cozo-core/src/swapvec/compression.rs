@@ -1,6 +1,6 @@
 use lz4_flex::{compress_prepend_size, decompress_size_prepended};
 
-use crate::{swapvec::CompressionLevel, Compression};
+use super::swapvec::{Compression, CompressionLevel};
 
 /// Provide your own compression algorithm by
 /// creating an empty struct implementing `compress`

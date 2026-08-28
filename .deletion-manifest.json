@@ -1,0 +1,10 @@
+{
+  "entries": [
+    {
+      "capability": "file:third_party/swapvec-0.3-lz4-fix/src/lib.rs",
+      "disposition": "replacement",
+      "ref": "SwapVec implementation is embedded at cozo-core/src/swapvec/mod.rs with its source modules and lz4_flex 0.11.6 fix preserved; user-authorized publish-preparation task 2026-08-28"
+    }
+  ],
+  "signedBy": "user:putao 2026-08-28 via publish-preparation task"
+}

@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
-members = [
-    "cozo-core",
+members = ["cozo-core"]
+exclude = [
     "cozorocks",
     "cozo-bin",
     "cozo-lib-c",
@@ -16,6 +16,3 @@ members = [
 [profile.bench]
 lto = true
 debug = true
-
-[profile.dev.package."cozorocks"]
-opt-level = 3

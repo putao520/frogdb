@@ -6,6 +6,8 @@
  * You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+use crate::swapvec::SwapVec;
+
 #[inline(always)]
 pub(crate) fn swap_option_result<T, E>(d: Result<Option<T>, E>) -> Option<Result<T, E>> {
     match d {
@@ -18,7 +20,7 @@ pub(crate) fn swap_option_result<T, E>(d: Result<Option<T>, E>) -> Option<Result
 #[derive(Default)]
 pub(crate) struct TempCollector<T: serde::Serialize + for<'a> serde::Deserialize<'a>> {
     // pub(crate) inner: Vec<T>,
-    pub(crate) inner: swapvec::SwapVec<T>,
+    pub(crate) inner: SwapVec<T>,
 }
 
 impl<T: serde::Serialize + for<'a> serde::Deserialize<'a>> TempCollector<T> {

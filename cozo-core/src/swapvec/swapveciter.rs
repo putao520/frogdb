@@ -7,9 +7,9 @@ use std::{collections::VecDeque, io::Seek};
 
 use serde::{Deserialize, Serialize};
 
-use crate::compression::Compress;
-use crate::error::SwapVecError;
-use crate::swapvec::{BatchInfo, CheckedFile, SwapVecConfig};
+use super::compression::Compress;
+use super::error::SwapVecError;
+use super::swapvec::{BatchInfo, CheckedFile, SwapVecConfig};
 
 pub struct CheckedFileRead {
     pub file: File,

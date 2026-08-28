@@ -28,7 +28,6 @@ pub enum SwapVecError {
 impl From<std::io::Error> for SwapVecError {
     fn from(_value: std::io::Error) -> Self {
         match _value.kind() {
-            // TODO https://github.com/rust-lang/rust/issues/86442
             // std::io::ErrorKind::StorageFull => Self::OutOfDisk,
             std::io::ErrorKind::PermissionDenied => Self::MissingPermissions,
             _ => Self::Other,

@@ -9,9 +9,9 @@ frog-build project (`github.com/putao520/frogdb`).
   ("Merge pull request #286 from preludeorg/fix-stored-prefix-join").
 - Upstream has been dormant since 2024-12; this fork is the maintenance line
   for Frog's embedded graph engine.
-- Publisher crate: `cozo-core/` (package name `cozo`). Maintenance versions
-  carry a `-frog.N` pre-release suffix (e.g. `0.7.6-frog.1`) and are consumed
-  via path dependency by grok-build; they are not published to crates.io.
+- Publisher crate: `cozo-core/` (package name `frogdb`). Maintenance versions
+  carry a `-frog.N` pre-release suffix (for example, `0.7.6-frog.1`) and are
+  prepared for publication to crates.io from this repository.
 
 ## Maintenance policy
 
@@ -29,8 +29,7 @@ Authorized by user ruling 2026-08-28:
 ## Security notes
 
 - **RUSTSEC-2026-0041** (lz4_flex < 0.11.6 leaks uninit / reused buffer on
-  invalid input): `swapvec` 0.3.0 is vendored in-tree at
-  `third_party/swapvec-0.3-lz4-fix` with `lz4_flex` bumped `0.10.0 → 0.11.6`
-  (see `third_party/swapvec-0.3-lz4-fix/SECURITY-PATCH.md`).
-  `cozo-core` consumes it via path dependency; upstream swapvec 0.3/0.4 still
-  pin the vulnerable lz4_flex with no crates.io release past it.
+  invalid input): the `swapvec` 0.3.0 source is embedded in
+  `cozo-core/src/swapvec/` and uses direct `lz4_flex` 0.11.6-or-newer
+  dependency resolution. Upstream swapvec 0.3/0.4 still pins the vulnerable
+  lz4_flex release with no crates.io release past it.
