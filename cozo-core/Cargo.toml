@@ -1,6 +1,6 @@
 [package]
 name = "frogdb"
-version = "0.7.6-frog.1"
+version = "0.7.6-frog.2"
 edition = "2021"
 description = "A graph, document, and vector hybrid embedded database, forked from Cozo"
 authors = ["Ziyang Hu"]

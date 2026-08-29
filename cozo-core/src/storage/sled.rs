@@ -132,7 +132,7 @@ impl<'s> StoreTx<'s> for SledTx {
     #[inline]
     fn del(&mut self, key: &[u8]) -> Result<()> {
         self.ensure_changes_db()?;
-        let val_to_write = [PUT_MARKER];
+        let val_to_write = [DEL_MARKER];
         self.changes
             .as_mut()
             .unwrap()
@@ -142,6 +142,7 @@ impl<'s> StoreTx<'s> for SledTx {
     }
 
     fn del_range_from_persisted(&mut self, lower: &[u8], upper: &[u8]) -> Result<()> {
+        self.ensure_changes_db()?;
         let mut to_del = TempCollector::default();
 
         for pair in self.range_scan(lower, upper) {
@@ -150,7 +151,11 @@ impl<'s> StoreTx<'s> for SledTx {
         }
 
         for k_res in to_del.into_iter() {
-            self.db.remove(&k_res).into_diagnostic()?;
+            self.changes
+                .as_mut()
+                .unwrap()
+                .insert(k_res, &[DEL_MARKER])
+                .into_diagnostic()?;
         }
         Ok(())
     }
@@ -178,6 +183,7 @@ impl<'s> StoreTx<'s> for SledTx {
                 }
             }
             self.db.apply_batch(batch).into_diagnostic()?;
+            self.db.flush().into_diagnostic()?;
         }
         Ok(())
     }
@@ -421,5 +427,224 @@ impl Iterator for SledIter {
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         swap_option_result(self.next_inner())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn open_storage(path: &Path) -> SledStorage {
+        SledStorage {
+            db: sled::open(path).into_diagnostic().unwrap(),
+        }
+    }
+
+    fn reopen_db(path: &Path) -> Db {
+        sled::open(path).into_diagnostic().unwrap()
+    }
+
+    fn db_get(db: &Db, key: &[u8]) -> Option<Vec<u8>> {
+        db.get(key).into_diagnostic().unwrap().map(|v| v.to_vec())
+    }
+
+    fn seed(storage: &SledStorage, pairs: &[(&[u8], &[u8])]) {
+        let mut tx = storage.transact(true).unwrap();
+        for (k, v) in pairs {
+            tx.put(k, v).unwrap();
+        }
+        tx.commit().unwrap();
+    }
+
+    #[test]
+    fn del_transaction_view() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = open_storage(dir.path());
+        seed(&storage, &[(b"k1", b"v1"), (b"k2", b"v2")]);
+
+        let mut tx = storage.transact(true).unwrap();
+        tx.del(b"k1").unwrap();
+        assert_eq!(tx.get(b"k1", false).unwrap(), None);
+        assert!(!tx.exists(b"k1", false).unwrap());
+        assert_eq!(
+            tx.range_scan(b"k1", b"k3")
+                .map(|r| r.unwrap())
+                .collect_vec(),
+            vec![(b"k2".to_vec(), b"v2".to_vec())]
+        );
+    }
+
+    #[test]
+    fn del_commit_then_reopen() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = open_storage(dir.path());
+        seed(&storage, &[(b"k1", b"v1"), (b"k2", b"v2")]);
+
+        let mut tx = storage.transact(true).unwrap();
+        tx.del(b"k1").unwrap();
+        tx.commit().unwrap();
+        drop(tx);
+        drop(storage);
+
+        let db = reopen_db(dir.path());
+        assert_eq!(db_get(&db, b"k1"), None);
+        assert_eq!(db_get(&db, b"k2").as_deref(), Some(&b"v2"[..]));
+    }
+
+    #[test]
+    fn del_abort_keeps_main_db() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = open_storage(dir.path());
+        seed(&storage, &[(b"k1", b"v1")]);
+
+        let mut tx = storage.transact(true).unwrap();
+        tx.del(b"k1").unwrap();
+        drop(tx); // abort: no commit
+
+        let reader = storage.transact(false).unwrap();
+        assert_eq!(
+            reader.get(b"k1", false).unwrap().as_deref(),
+            Some(&b"v1"[..])
+        );
+    }
+
+    #[test]
+    fn range_delete_abort_keeps_main_db() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = open_storage(dir.path());
+        seed(&storage, &[(b"r1", b"v1"), (b"r2", b"v2"), (b"r3", b"v3")]);
+
+        let mut tx = storage.transact(true).unwrap();
+        tx.del_range_from_persisted(b"r1", b"r3").unwrap();
+        drop(tx); // abort: no commit
+
+        let reader = storage.transact(false).unwrap();
+        assert!(reader.get(b"r1", false).unwrap().is_some());
+        assert!(reader.get(b"r2", false).unwrap().is_some());
+        assert!(reader.get(b"r3", false).unwrap().is_some());
+    }
+
+    #[test]
+    fn range_delete_commit_then_reopen() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = open_storage(dir.path());
+        seed(&storage, &[(b"r1", b"v1"), (b"r2", b"v2"), (b"r3", b"v3")]);
+
+        let mut tx = storage.transact(true).unwrap();
+        tx.del_range_from_persisted(b"r1", b"r3").unwrap();
+        tx.commit().unwrap();
+        drop(tx);
+        drop(storage);
+
+        let db = reopen_db(dir.path());
+        assert_eq!(db_get(&db, b"r1"), None);
+        assert_eq!(db_get(&db, b"r2"), None);
+        assert_eq!(db_get(&db, b"r3").as_deref(), Some(&b"v3"[..]));
+    }
+
+    #[test]
+    fn put_then_range_delete_same_key_deletes() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = open_storage(dir.path());
+
+        let mut tx = storage.transact(true).unwrap();
+        tx.put(b"p1", b"v1").unwrap();
+        tx.del_range_from_persisted(b"p0", b"p2").unwrap();
+        assert_eq!(tx.get(b"p1", false).unwrap(), None);
+        tx.commit().unwrap();
+        drop(tx);
+        drop(storage);
+
+        let db = reopen_db(dir.path());
+        assert_eq!(db_get(&db, b"p1"), None);
+    }
+
+    #[test]
+    fn range_delete_then_put_same_key_retains() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = open_storage(dir.path());
+        seed(&storage, &[(b"p1", b"old")]);
+
+        let mut tx = storage.transact(true).unwrap();
+        tx.del_range_from_persisted(b"p0", b"p2").unwrap();
+        assert_eq!(tx.get(b"p1", false).unwrap(), None);
+        tx.put(b"p1", b"new").unwrap();
+        assert_eq!(tx.get(b"p1", false).unwrap().as_deref(), Some(&b"new"[..]));
+        tx.commit().unwrap();
+        drop(tx);
+        drop(storage);
+
+        let db = reopen_db(dir.path());
+        assert_eq!(db_get(&db, b"p1").as_deref(), Some(&b"new"[..]));
+    }
+
+    #[test]
+    fn mixed_del_put_range_atomic_and_durable() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = open_storage(dir.path());
+        seed(
+            &storage,
+            &[
+                (b"k1", b"v1"),
+                (b"k2", b"v2"),
+                (b"k3", b"v3"),
+                (b"k4", b"v4"),
+            ],
+        );
+
+        let mut tx = storage.transact(true).unwrap();
+        tx.put(b"k1", b"new1").unwrap();
+        tx.put(b"k5", b"v5").unwrap();
+        tx.del(b"k2").unwrap();
+        tx.del_range_from_persisted(b"k3", b"k4").unwrap();
+
+        // within-transaction merged view
+        assert_eq!(tx.get(b"k1", false).unwrap().as_deref(), Some(&b"new1"[..]));
+        assert_eq!(tx.get(b"k2", false).unwrap(), None);
+        assert_eq!(tx.get(b"k3", false).unwrap(), None);
+        assert_eq!(tx.get(b"k4", false).unwrap().as_deref(), Some(&b"v4"[..]));
+        assert_eq!(tx.get(b"k5", false).unwrap().as_deref(), Some(&b"v5"[..]));
+
+        // pre-commit: main db untouched, fresh reader sees old state
+        let reader = storage.transact(false).unwrap();
+        assert_eq!(
+            reader.get(b"k1", false).unwrap().as_deref(),
+            Some(&b"v1"[..])
+        );
+        assert!(reader.get(b"k2", false).unwrap().is_some());
+        assert!(reader.get(b"k3", false).unwrap().is_some());
+        assert!(reader.get(b"k4", false).unwrap().is_some());
+        assert_eq!(reader.get(b"k5", false).unwrap(), None);
+        drop(reader);
+
+        tx.commit().unwrap();
+        drop(tx);
+        drop(storage);
+
+        let db = reopen_db(dir.path());
+        assert_eq!(db_get(&db, b"k1").as_deref(), Some(&b"new1"[..]));
+        assert_eq!(db_get(&db, b"k2"), None);
+        assert_eq!(db_get(&db, b"k3"), None);
+        assert_eq!(db_get(&db, b"k4").as_deref(), Some(&b"v4"[..]));
+        assert_eq!(db_get(&db, b"k5").as_deref(), Some(&b"v5"[..]));
+    }
+
+    #[test]
+    fn commit_then_immediate_reopen_is_durable() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = open_storage(dir.path());
+
+        let mut tx = storage.transact(true).unwrap();
+        for (k, v) in [(b"d1", b"v1"), (b"d2", b"v2"), (b"d3", b"v3")] {
+            tx.put(k, v).unwrap();
+        }
+        tx.commit().unwrap();
+        drop(tx);
+        drop(storage);
+
+        let db = reopen_db(dir.path());
+        assert_eq!(db_get(&db, b"d1").as_deref(), Some(&b"v1"[..]));
+        assert_eq!(db_get(&db, b"d2").as_deref(), Some(&b"v2"[..]));
+        assert_eq!(db_get(&db, b"d3").as_deref(), Some(&b"v3"[..]));
     }
 }
