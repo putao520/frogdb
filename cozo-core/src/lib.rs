@@ -31,6 +31,13 @@
 #![allow(clippy::type_complexity)]
 #![allow(clippy::too_many_arguments)]
 
+/// Same as `miette::bail!` but the expansion has no trailing semicolon,
+/// so it stays usable in expression position (rust-lang/rust#79813 turns
+/// the trailing-semicolon form into a hard error).
+macro_rules! bail {
+    ($($arg:tt)*) => { return Err(miette::miette!($($arg)*)) };
+}
+
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::Arc;
@@ -44,8 +51,8 @@ pub use miette::Error;
 use miette::Report;
 #[allow(unused_imports)]
 use miette::{
-    bail, miette, GraphicalReportHandler, GraphicalTheme, IntoDiagnostic, JSONReportHandler,
-    Result, ThemeCharacters, ThemeStyles,
+    GraphicalReportHandler, GraphicalTheme, IntoDiagnostic, JSONReportHandler, miette, Result,
+    ThemeCharacters, ThemeStyles,
 };
 use parse::parse_script;
 use parse::CozoScript;

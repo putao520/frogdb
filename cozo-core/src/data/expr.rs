@@ -12,7 +12,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::mem;
 
 use itertools::Itertools;
-use miette::{bail, miette, Diagnostic, Result};
+use miette::{miette, Diagnostic, Result};
 use serde::de::{Error, Visitor};
 use serde::{Deserializer, Serializer};
 use smartstring::{LazyCompact, SmartString};

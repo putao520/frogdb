@@ -27,7 +27,7 @@ use either::{Left, Right};
 use itertools::Itertools;
 use miette::Report;
 #[allow(unused_imports)]
-use miette::{bail, ensure, miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
+use miette::{ensure, miette, Diagnostic, IntoDiagnostic, Result, WrapErr};
 use serde_json::json;
 use smartstring::{LazyCompact, SmartString};
 use thiserror::Error;

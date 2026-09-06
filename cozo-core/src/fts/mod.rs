@@ -15,7 +15,7 @@ use crate::fts::tokenizer::{
 };
 use crate::DataValue;
 use jieba_rs::Jieba;
-use miette::{bail, ensure, miette, Result};
+use miette::{ensure, miette, Result};
 use sha2::digest::FixedOutput;
 use sha2::{Digest, Sha256};
 use smartstring::{LazyCompact, SmartString};

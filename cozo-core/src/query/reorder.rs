@@ -9,7 +9,7 @@
 use std::collections::BTreeSet;
 use std::mem;
 
-use miette::{bail, Diagnostic, Result};
+use miette::{Diagnostic, Result};
 use thiserror::Error;
 
 use crate::data::program::{NormalFormAtom, NormalFormInlineRule};

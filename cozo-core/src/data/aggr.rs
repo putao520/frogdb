@@ -9,7 +9,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Debug, Formatter};
 
-use miette::{bail, ensure, miette, Result};
+use miette::{ensure, miette, Result};
 use rand::prelude::*;
 
 use crate::data::value::DataValue;

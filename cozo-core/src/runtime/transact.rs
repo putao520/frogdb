@@ -9,7 +9,7 @@
 use std::sync::atomic::{AtomicU32, AtomicU64};
 use std::sync::Arc;
 
-use miette::{bail, Result};
+use miette::Result;
 use crate::data::program::ReturnMutation;
 
 use crate::data::tuple::TupleT;

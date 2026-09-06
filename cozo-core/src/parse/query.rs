@@ -15,7 +15,7 @@ use std::sync::Arc;
 
 use either::{Left, Right};
 use itertools::Itertools;
-use miette::{bail, ensure, Diagnostic, LabeledSpan, Report, Result};
+use miette::{ensure, Diagnostic, LabeledSpan, Report, Result};
 use pest::Parser;
 use smartstring::{LazyCompact, SmartString};
 use thiserror::Error;

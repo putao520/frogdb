@@ -17,7 +17,7 @@ use crate::runtime::relation::RelationHandle;
 use crate::runtime::transact::SessionTx;
 use crate::{DataValue, SourceSpan};
 use itertools::Itertools;
-use miette::{bail, miette, Diagnostic, Result};
+use miette::{miette, Diagnostic, Result};
 use ordered_float::OrderedFloat;
 use rustc_hash::{FxHashMap, FxHashSet};
 use smartstring::{LazyCompact, SmartString};

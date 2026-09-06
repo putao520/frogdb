@@ -11,7 +11,7 @@ use std::sync::atomic::Ordering;
 
 use either::{Either, Left, Right};
 use itertools::Itertools;
-use miette::{bail, Diagnostic, Report, Result};
+use miette::{Diagnostic, Report, Result};
 use smartstring::{LazyCompact, SmartString};
 use thiserror::Error;
 

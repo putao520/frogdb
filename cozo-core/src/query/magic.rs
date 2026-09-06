@@ -10,7 +10,7 @@ use std::collections::BTreeSet;
 use std::mem;
 
 use itertools::Itertools;
-use miette::{bail, ensure, Result};
+use miette::{ensure, Result};
 use smallvec::SmallVec;
 use smartstring::SmartString;
 

@@ -15,7 +15,7 @@ use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use chrono::DateTime;
 use itertools::Itertools;
-use miette::{bail, ensure, Diagnostic, Result};
+use miette::{ensure, Diagnostic, Result};
 use serde_json::json;
 use smartstring::{LazyCompact, SmartString};
 use thiserror::Error;

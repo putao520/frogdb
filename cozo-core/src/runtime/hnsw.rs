@@ -16,7 +16,7 @@ use crate::runtime::relation::RelationHandle;
 use crate::runtime::transact::SessionTx;
 use crate::{DataValue, SourceSpan};
 use itertools::Itertools;
-use miette::{bail, miette, Result};
+use miette::{miette, Result};
 use ordered_float::OrderedFloat;
 use priority_queue::PriorityQueue;
 use rand::Rng;

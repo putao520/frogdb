@@ -10,7 +10,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use itertools::Itertools;
-use miette::{bail, Diagnostic, IntoDiagnostic, Result, WrapErr};
+use miette::{Diagnostic, IntoDiagnostic, Result, WrapErr};
 use pest::Parser;
 use smartstring::{LazyCompact, SmartString};
 use thiserror::Error;

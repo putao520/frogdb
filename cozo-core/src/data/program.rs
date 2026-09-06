@@ -11,7 +11,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
 
-use miette::{bail, ensure, miette, Diagnostic, Result};
+use miette::{ensure, miette, Diagnostic, Result};
 use smallvec::SmallVec;
 use smartstring::{LazyCompact, SmartString};
 use thiserror::Error;

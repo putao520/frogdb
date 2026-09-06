@@ -9,7 +9,7 @@
 use std::collections::BTreeMap;
 
 use itertools::Itertools;
-use miette::{bail, ensure, Result};
+use miette::{ensure, Result};
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
 use smartstring::{LazyCompact, SmartString};
