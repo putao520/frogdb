@@ -1023,7 +1023,7 @@ dependencies = [
 
 [[package]]
 name = "frogdb"
-version = "0.7.6-frog.2"
+version = "0.7.6-frog.3"
 dependencies = [
  "aho-corasick",
  "approx",
