@@ -9,6 +9,12 @@
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
+// Pull sqlite3-src native archive into the final link when bundled opt-in is on.
+// sqlite is depended with default-features=false; without this (or sqlite/linkage),
+// cargo may keep sqlite3-src in the graph but omit -lsqlite3 from the exe link line.
+#[cfg(feature = "storage-sqlite-src")]
+use sqlite3_src as _;
+
 use ::sqlite::Connection;
 use crossbeam::sync::{ShardedLock, ShardedLockReadGuard, ShardedLockWriteGuard};
 use either::{Either, Left, Right};

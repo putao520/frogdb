@@ -22,14 +22,23 @@ default = ["compact"]
 compact = ["minimal", "requests", "graph-algo"]
 ## Enables the `minimal`, `requests` and `graph-algo` features in single threaded mode.
 compact-single-threaded = ["minimal", "requests", "graph-algo"]
-## Enables the `storage-sqlite` feature.
-minimal = ["storage-sqlite", "storage-sqlite-src"]
+## Enables `storage-sqlite` against the host/system libsqlite3 (not bundled).
+## Bundled SQLite source remains an explicit opt-in via `storage-sqlite-src`.
+minimal = ["storage-sqlite"]
 ## Enables the [Sqlite](https://www.sqlite.org/index.html) backend,
 ## also allows backup and restore with Sqlite data files.
+## Links the host/system libsqlite3 (see build.rs); does not pull `sqlite3-src`,
+## so it can coexist in-process with `libsqlite3-sys` (e.g. rusqlite bundled).
 ## Sqlite is easy to compile, has very low resource requirements and reasonable performance,
 ## but does not support much concurrency.
 storage-sqlite = ["dep:sqlite"]
-storage-sqlite-src = ["dep:sqlite3-src", "sqlite3-src/bundled"]
+## Opt-in: compile SQLite from bundled source via `sqlite3-src`.
+## Mutually exclusive in one dependency graph with crates that `links = "sqlite3"`
+## (notably `libsqlite3-sys`). Prefer host `storage-sqlite` when coexisting.
+## `sqlite/linkage` activates sqlite3-sys's `extern crate sqlite3_src` so the
+## bundled archive is actually pulled into the final link (native `links` alone
+## is not enough when sqlite default-features are off).
+storage-sqlite-src = ["dep:sqlite3-src", "sqlite3-src/bundled", "sqlite/linkage"]
 ## Enables the [RocksDB](http://rocksdb.org/) backend.
 ## RocksDB is hard to compile on some platforms, uses more resources than SQLite,
 ## but is very performant and supports an extremely high level of concurrency.
@@ -128,7 +137,9 @@ rocksdb = { version = "0.22.0", optional = true }
 sled = { version = "0.34.7", optional = true }
 tikv-client = { package = "surrealdb-tikv-client", version = "0.5.0", optional = true }
 tokio = { version = "1.37.0", optional = true }
-sqlite = { version = "0.36.0", optional = true }
+# default-features=false cuts linkage→sqlite3-src; host link is via build.rs;
+# bundled source remains explicit via feature storage-sqlite-src.
+sqlite = { version = "0.36.0", default-features = false, optional = true }
 sqlite3-src = { version = "0.6.1", optional = true }
 js-sys = { version = "0.3.60", optional = true }
 graph = { version = "0.3.2", optional = true }
